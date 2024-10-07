@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const csv = require('csv-parser');
 const fs = require('fs');
-const Location = require('./models/Greenhouse'); // Ensure this model is set up correctly
+const Location = require('./models/Greenhouse'); 
 
 // Connect to MongoDB
 mongoose.connect('mongodb://localhost:27017/greenhouse_db', {
@@ -23,13 +23,14 @@ const importCsv = (filePath) => {
     return new Promise((resolve, reject) => {
         // Initialize empty array for data to be stored in.
         let dataRows = [];
-        fs.createReadStream(filePath)
+        fs.createReadStream(filePath) // Read csv file as a stream
         .pipe(csv())
         .on('data', (row) => {
             dataRows.push(row);
         })
         .on('end', async () => {
             for (let row of dataRows) {
+                // csv columns are destructured into variables
                 const {
                     location,
                     greenhouse_id,
@@ -42,15 +43,15 @@ const importCsv = (filePath) => {
                     co2_levels
                 } = row;
 
-                // Parse timestamp as a Date object
+                // Create reading object
                 const reading = {
-                    timestamp: new Date(timestamp),  // Corrected parsing
+                    timestamp: new Date(timestamp),  
                     temperature: parseFloat(temperature),
                     humidity: parseFloat(humidity),
                     soil_moisture: parseFloat(soil_moisture),
                     co2_levels: parseFloat(co2_levels)
                 };
-
+                // Look for location in MongoDB that matches location field in teh csv
                 let locationDoc = await Location.findOne({ location });
 
                 if (!locationDoc) {
