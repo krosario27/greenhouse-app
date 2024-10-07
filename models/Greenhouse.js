@@ -28,7 +28,4 @@ const locationSchema = new mongoose.Schema({
     greenhouses: [greenhouseSchema]
 });
 
-// Create and export
-const Location = mongoose.model('Location', locationSchema);
-
-module.exports = Location
+module.exports = mongoose.model('Location', locationSchema);
