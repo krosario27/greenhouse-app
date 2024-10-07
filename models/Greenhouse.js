@@ -11,7 +11,7 @@ const readingSchema = new mongoose.Schema({
 
 // Define schema for sensors (internal/external)
 const sensorSchema = new mongoose.Schema({
-    sesnor_id: { type: Number, required: true },
+    sensor_id: { type: Number, required: true },
     sensor_type: { type: String, enum: ['Internal', 'External'], required: true },
     readings: [readingSchema]
 });
@@ -24,7 +24,7 @@ const greenhouseSchema = new mongoose.Schema({
 
 // Define Location that houses multiple greenhouses
 const locationSchema = new mongoose.Schema({
-    locaiton: { type: String, required: true },
+    location: { type: String, required: true },
     greenhouses: [greenhouseSchema]
 });
 

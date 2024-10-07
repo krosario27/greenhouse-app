@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const csv = require('csv-parser');
 const fs = require('fs');
-const Location = require('./models/Greenhouse');
+const Location = require('./models/Greenhouse'); // Ensure this model is set up correctly
 
-// COnnect to MongoDB
+// Connect to MongoDB
 mongoose.connect('mongodb://localhost:27017/greenhouse_db', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -21,7 +21,7 @@ const upload = multer({ dest: 'uploads/' });
 // CSV Import function
 const importCsv = (filePath) => {
     return new Promise((resolve, reject) => {
-        // Initialize empty arra for data to be stored in.
+        // Initialize empty array for data to be stored in.
         let dataRows = [];
         fs.createReadStream(filePath)
         .pipe(csv())
@@ -42,8 +42,9 @@ const importCsv = (filePath) => {
                     co2_levels
                 } = row;
 
+                // Parse timestamp as a Date object
                 const reading = {
-                    timestamp: parseFloat(timestamp),
+                    timestamp: new Date(timestamp),  // Corrected parsing
                     temperature: parseFloat(temperature),
                     humidity: parseFloat(humidity),
                     soil_moisture: parseFloat(soil_moisture),
@@ -51,7 +52,9 @@ const importCsv = (filePath) => {
                 };
 
                 let locationDoc = await Location.findOne({ location });
+
                 if (!locationDoc) {
+                    // Create new location, greenhouse, and sensors
                     locationDoc = new Location({
                         location,
                         greenhouses: [{
@@ -64,8 +67,11 @@ const importCsv = (filePath) => {
                         }]
                     });
                 } else {
+                    // Find the greenhouse
                     let greenhouse = locationDoc.greenhouses.find(g => g.greenhouse_id === greenhouse_id);
+                    
                     if (!greenhouse) {
+                        // If the greenhouse doesn't exist, add it
                         locationDoc.greenhouses.push({
                             greenhouse_id,
                             sensors: [{
@@ -75,19 +81,25 @@ const importCsv = (filePath) => {
                             }]
                         });
                     } else {
-                        let sensor = greenhouse.sensors.find(s => s.sensor_id === sensor_id);
+                        // Find the correct sensor in the greenhouse
+                        let sensor = greenhouse.sensors.find(s => s.sensor_id == sensor_id);
+
                         if (!sensor) {
-                            greenhouse.sensor.push({
+                            // If the sensor doesn't exist, add it
+                            greenhouse.sensors.push({
                                 sensor_id,
                                 sensor_type,
                                 readings: [reading]
                             });
                         } else {
+                            // Append the new reading to the sensor's readings array
                             sensor.readings.push(reading);
                         }
                     }
                 }
-                await locationDoc.save()
+
+                // Save the updated location document
+                await locationDoc.save();
             }
             resolve("CSV data successfully imported!");
         })
@@ -106,7 +118,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     try {
         const filePath = req.file.path;
         const message = await importCsv(filePath);
-        //Delete file after upload
+        // Delete file after processing
         fs.unlinkSync(filePath);
         res.status(200).send(message);
     } catch (error) {
@@ -117,5 +129,5 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
 // Start the express server
 app.listen(port, () => {
-    console.log(`Server is runnin on port ${port}`);
+    console.log(`Server is running on port ${port}`);
 });
