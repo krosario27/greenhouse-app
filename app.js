@@ -19,7 +19,7 @@ const port = 3000;
 const upload = multer({ dest: 'uploads/' });
 
 // CSV Import function
-const importCSV = (filePath) => {
+const importCsv = (filePath) => {
     return new Promise((resolve, reject) => {
         // Initialize empty arra for data to be stored in.
         let dataRows = [];
@@ -96,3 +96,26 @@ const importCSV = (filePath) => {
         });
     });
 };
+
+// Route to upload and import CSV
+app.post('/upload', upload.single('file'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).send('No file uploaded.');
+    }
+
+    try {
+        const filePath = req.file.path;
+        const message = await importCsv(filePath);
+        //Delete file after upload
+        fs.unlinkSync(filePath);
+        res.status(200).send(message);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error processing CSV file');
+    }
+});
+
+// Start the express server
+app.listen(port, () => {
+    console.log(`Server is runnin on port ${port}`);
+});
